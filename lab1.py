@@ -150,6 +150,9 @@ def question1():
     # Check if mean is close to 1/rate
     print ("1/rate: ")
     print (1/rate)
+    # Check if variance is close to 1/rate^2 
+    print ("1/rate^2 :")
+    print (math.pow((1/rate), 2))
     
 question1()
 
