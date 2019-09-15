@@ -1,11 +1,15 @@
 import math
 import random
 import numpy
+import csv
 
 # Constant event types
-ARRIVAL = "ARRIVAL"
-OBSERVATION = "OBSERVATION"
-DEPARTURE = "DEPARTURE"
+ARRIVAL = 'ARRIVAL'
+OBSERVATION = 'OBSERVATION'
+DEPARTURE = 'DEPARTURE'
+
+# CSV files 
+eventsFile = 'events.csv'
 
 # Generate exponential random vairables 
 def generateRv(rate): 
@@ -15,7 +19,7 @@ def generateRv(rate):
 
 class Event(object):
     def __init__(self):
-        self.type = "" # ARRIVAL, DEPARTURE, OBSERVATION
+        self.type = '' # ARRIVAL, DEPARTURE, OBSERVATION
         self.id = 0 
         self.time = 0
         self.packetLength = 0 
@@ -26,9 +30,9 @@ class Simulation(object):
         # User provided params 
         self.lambd = lambd # the interarrival rate 
         self.duration = T # sim duration 
-        self.avgPacketLength = L
+        self.avgPacketLength = L # in bits
         self.alpha = alpha # observer rate 
-        self.linkRate = C 
+        self.linkRate = C # in bps
         self.queueSize = queueSize
         # Variables from simulation 
         self.numObservations = 0
@@ -49,11 +53,7 @@ class Simulation(object):
         # Take the unsorted list of events, and sort
         # the event objects by time 
         self.eventsList.sort(key=lambda x: x.time)
-        for event in self.eventsList:
-            print ("************")
-            print (f"{event.type} {event.id}")
-            print (event.time)
-    
+
     def generateArrivals(self): 
         time = 0.0 
         i = 1 
@@ -72,7 +72,6 @@ class Simulation(object):
             i += 1
             self.eventsList.append(se)
         self.numPackets = i 
-        # print (self.eventsList)
     
     def generateObservations(self):
         time = 0.0 
@@ -91,15 +90,26 @@ class Simulation(object):
             i += 1
             self.eventsList.append(se)
         self.numObservations = i 
-        # print (self.eventsList)
+
+    def generateEventsCsv(self): 
+        with open(eventsFile, mode='w') as f:
+            # Create the csv writer
+            eventsWriter = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            # Write rows 
+            eventsWriter.writerow(['EVENT', 'TIME', 'PACKET LENGTH'])
+            for event in self.eventsList: 
+                # Observation events do not have a packet length 
+                row = [event.type, event.time, event.packetLength] if event.packetLength != 0 else [event.type, event.time, ''] 
+                eventsWriter.writerow(row)
+            print ("Sucessfully wrote events to file")
     
     def run(self):
         self.generateArrivals()
         self.generateObservations()
         self.sortEventsList()
         self.generateDepartures()
-  
         self.sortEventsList()
+        self.generateEventsCsv()
 
     def generateDepartures(self):
         previousEvent = None
@@ -110,18 +120,19 @@ class Simulation(object):
                 departureEvent = self.populateDeparture(event, previousEvent)
                 previousEvent = departureEvent
                 departureEvents.append(departureEvent)
+        # Add departures events to the events list
         self.eventsList.extend(departureEvents)
 
     def populateDeparture(self, arrivalEvent, previousDepartureEvent): 
         # Based on the sorted list of arrivals + observations, 
         # determine when a packet departs 
-        serviceTime = (arrivalEvent.packetLength/(self.linkRate * 1000000))
+        serviceTime = (arrivalEvent.packetLength/(self.linkRate))
         # If first packet being serviced, or queue is empty, departure time is arrival + service type
         if previousDepartureEvent is None or arrivalEvent.time > previousDepartureEvent.time:
             departureTime = arrivalEvent.time + serviceTime
         else:
             departureTime = previousDepartureEvent.time + serviceTime
-
+        # Create the departure event
         departureEvent = Event()
         departureEvent.time = departureTime
         departureEvent.type = DEPARTURE
@@ -129,11 +140,10 @@ class Simulation(object):
         departureEvent.id = arrivalEvent.id
         return departureEvent
 
-            
-
-# These numbers are arbitrary    
-# s = Simulation(0.25, 2000, 500, 1,1, 1)
-# s.run() 
+# These numbers are arbitrary  
+# Ensure units are in bits/sec  
+s = Simulation(0.75, 2000, 1000, 7.5,1000000, 1)
+s.run() 
     
 def question1():
     # We would expect the average to be close to 1/rate 
@@ -155,5 +165,3 @@ def question1():
     print (math.pow((1/rate), 2))
     
 question1()
-
-
