@@ -45,6 +45,22 @@ class Simulation(object):
         self.pIdle = 0 # Idle packets, the wait time
         self.pLoss = 0 # Packets lost 
     
+    # WIP, calcluate other stuff here
+    def processEvents(self): 
+        for event in self.eventsList: 
+            if event.type == ARRIVAL:
+                self.Na += 1
+            elif event.type == DEPARTURE:
+                self.Nd += 1
+            else: 
+                self.No += 1
+        eventSummary = {
+            'Na': self.Na,
+            'No': self.No,
+            'Nd': self.Nd,
+        }
+        print (eventSummary)
+    
     def sortEventsList(self): 
         """
             Generate arrival and observation events. 
@@ -110,6 +126,7 @@ class Simulation(object):
         self.generateDepartures()
         self.sortEventsList()
         self.generateEventsCsv()
+        self.processEvents()
 
     def generateDepartures(self):
         previousEvent = None
@@ -151,17 +168,15 @@ def question1():
     vars = []
     for i in range(1000):
         vars.append(generateRv(rate))
-    print ("Mean: ")
-    # Get the mean
-    print (numpy.mean(vars))
-    # Get the average
-    print ("Variance: ")
-    print (numpy.var(vars))
-    # Check if mean is close to 1/rate
-    print ("1/rate: ")
-    print (1/rate)
-    # Check if variance is close to 1/rate^2 
-    print ("1/rate^2 :")
-    print (math.pow((1/rate), 2))
+    summary = {
+        'Actual mean': numpy.mean(vars), 
+        'Actual variance': numpy.var(vars), 
+        # Check if mean is close to 1/rate
+        'Expected mean': 1/rate, 
+        # Check if variance is close to 1/rate^2 
+        'Expected variance': math.pow((1/rate), 2)
+    }
+    
+    print (summary)
     
 question1()
