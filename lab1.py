@@ -157,9 +157,17 @@ class Simulation(object):
         departureEvent.id = arrivalEvent.id
         return departureEvent
 
-# These numbers are arbitrary  
-# Ensure units are in bits/sec  
-s = Simulation(0.75, 2000, 1000, 7.5,1000000, 1)
+# Simulation params 
+p = 0.25 # rho
+L = 2000 # packet size 
+C = 1000000 # link rate
+# Since rho = (lambda * L) / C. Then, lambda = (rho * C) / L
+lambd = (p*C)/L # packet arrival rate
+# Mentioned in slides that observer rate at least 5x lambda
+alpha = 5*lambd # observer rate 
+k = 1 # queue size
+T = 1000 # simulation time 
+s = Simulation(lambd, L, T, alpha, C, k)
 s.run() 
     
 def question1():
@@ -176,7 +184,7 @@ def question1():
         # Check if variance is close to 1/rate^2 
         'Expected variance': math.pow((1/rate), 2)
     }
-    
+
     print (summary)
     
 question1()
