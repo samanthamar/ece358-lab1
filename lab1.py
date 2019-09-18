@@ -172,25 +172,6 @@ class Simulation(object):
         departureEvent.id = arrivalEvent.id
         return departureEvent
 
-# M/M/1 Queue
-# The rhos to test for q3 
-q3Summary = {} 
-rhoList = [0.25, 0.35, 0.45, 0.55, 0.65, 0.75, 0.85, 0.95]
-L = 2000 # packet size, constant 
-C = 1000000 # link rate, constant 
-k = 1 # queue size
-T = 1000 # simulation time 
-for rho in rhoList: 
-    p = rho 
-    # Since rho = (lambda * L) / C. Then, lambda = (rho * C) / L
-    lambd = (p*C)/L # packet arrival rate
-    # Mentioned in slides that observer rate at least 5x lambda
-    alpha = 5*lambd # observer rate 
-    print ('Starting sim for rho=%s' % p)
-    mm1 = Simulation(lambd, L, T, alpha, C, k)
-    summary = mm1.run() 
-    q3Summary[p] = summary 
-
 def question1():
     # We would expect the average to be close to 1/rate 
     rate = 75
@@ -208,13 +189,34 @@ def question1():
 
     print (summary)
 
-def question3(simSummary): 
+# M/M/1 Queue sim constants 
+L = 2000 # packet size  
+C = 1000000 # link rate 
+k = 1 # queue size
+T = 1000 # simulation time 
+def question3(): 
+
+    # M/M/1 Queue
+    # The rhos to test for q3 
+    q3Summary = {} 
+    rhoList = [0.25, 0.35, 0.45, 0.55, 0.65, 0.75, 0.85, 0.95]
+    for rho in rhoList: 
+        p = rho 
+        # Since rho = (lambda * L) / C. Then, lambda = (rho * C) / L
+        lambd = (p*C)/L # packet arrival rate
+        # Mentioned in slides that observer rate at least 5x lambda
+        alpha = 5*lambd # observer rate 
+        print ('Starting sim for rho=%s' % p)
+        mm1 = Simulation(lambd, L, T, alpha, C, k)
+        summary = mm1.run() 
+        q3Summary[p] = summary 
+    
     with open(q3File, mode='w') as f:
         # Create the csv writer
         writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
         # Write rows 
         writer.writerow(['rho', 'Na', 'Nd', 'No', 'E[N]', 'pIdle'])
-        for rho, summary in simSummary.items(): 
+        for rho, summary in q3Summary.items(): 
             # Observation events do not have a packet length 
             Na = summary['Na']
             Nd = summary['Nd']
@@ -225,7 +227,17 @@ def question3(simSummary):
             writer.writerow(row)
         print ("Sucessfully wrote q3 results to file")  
 
+def question4(): 
+    p = 1.2
+    # Since rho = (lambda * L) / C. Then, lambda = (rho * C) / L
+    lambd = (p*C)/L # packet arrival rate
+    # Mentioned in slides that observer rate at least 5x lambda
+    alpha = 5*lambd # observer rate 
+    print ('Starting sim for rho=%s' % p)
+    mm1 = Simulation(lambd, L, T, alpha, C, k)
+    summary = mm1.run() 
 
-    
+# Answer the questions    
 question1()
-question3(q3Summary)
+question3()
+question4()
