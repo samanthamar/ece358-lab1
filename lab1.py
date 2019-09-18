@@ -76,6 +76,7 @@ class Simulation(object):
                     bisect.insort(self.eventsList, departureEvent)
                 else:
                     self.pLoss += 1
+                    print("@@@@@@@@@@@@@@ DROPPED @@@@@@@@@@@@@@")
             elif event.type == DEPARTURE:
                 print(event)
                 self.Nd += 1
@@ -242,7 +243,41 @@ def question4():
     mm1 = Simulation(lambd, L, T, alpha, C, k)
     summary = mm1.run() 
 
+def question6():
+    q6Summary = {}
+    queueLengths = [10, 25, 50]
+    rhoList = [0.6, 0.7, 0.8, 0.9, 1, 1.1, 1.2, 1.3, 1.4]
+
+    for k in queueLengths:
+        q6Summary[k] = {}
+        for p in rhoList:
+            lambd = (p*C)/L # packet arrival rate
+            alpha = 5*lambd # observer rate
+            mm1k = Simulation(lambd, L, T, alpha, C, 10)
+            print (f"Starting sim for rho={p}, queueLength={k}")
+            summary = mm1k.run()
+            q6Summary[k][p] = summary
+
+    with open(q6File, mode='w') as f:
+        # Create the csv writer
+        writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+        # Write rows
+        writer.writerow(['k', 'rho', 'Na', 'Nd', 'No', 'E[N]', 'pIdle', 'pLoss'])
+        for k, summaries in q3Summary.items():
+            for rho, summary in summaries.items():
+                # Observation events do not have a packet length
+                Na = summary['Na']
+                Nd = summary['Nd']
+                No = summary['No']
+                packets = summary['E[N]']
+                pIdle = summary['pIdle']
+                pLoss = summary['pLoss']
+                row = [k, rho, Na, Nd, No, packets, pIdle, pLoss]
+                writer.writerow(row)
+        print ("Sucessfully wrote q3 results to file")
+
 # Answer the questions    
-question1()
-question3()
-question4()
+# question1()
+# question3()
+# question4()
+question6()
