@@ -22,11 +22,11 @@ def generateRv(rate):
     return ( x )
 
 class Event(object):
-    def __init__(self):
-        self.type = '' # ARRIVAL, DEPARTURE, OBSERVATION
-        self.id = 0 
-        self.time = 0
-        self.packetLength = 0 
+    def __init__(self, type, id, time, packetLength=0):
+        self.type = type # ARRIVAL, DEPARTURE, OBSERVATION
+        self.id = id
+        self.time = time
+        self.packetLength = packetLength
 
     def __lt__(self, event2):
         return self.time < event2.time
@@ -119,12 +119,8 @@ class Simulation(object):
         i = 1 
         # Generate arrival events
         while True:
-            se = Event()
-            se.type = ARRIVAL
-            se.id = i 
-            se.packetLength = generateRv(1.0/self.avgPacketLength)
             time += generateRv(self.lambd)
-            se.time = time
+            se = Event(ARRIVAL, i, time, generateRv(1.0/self.avgPacketLength))
             # If the time of packet arrival exceeds sim duration,
             # stop generating arrival events 
             if se.time > self.duration:
@@ -138,11 +134,8 @@ class Simulation(object):
         i = 1 
         # Generate observation events
         while True:
-            se = Event()
-            se.type = OBSERVATION
-            se.id = i 
             time += generateRv(self.alpha)
-            se.time = time
+            se = Event(OBSERVATION, i, time)
             # If the time of observation exceeds sim duration,
             # stop generating arrival events 
             if se.time > self.duration:
@@ -181,11 +174,7 @@ class Simulation(object):
         else:
             departureTime = previousDepartureEvent.time + serviceTime
         # Create the departure event
-        departureEvent = Event()
-        departureEvent.time = departureTime
-        departureEvent.type = DEPARTURE
-        departureEvent.packetLength = arrivalEvent.packetLength
-        departureEvent.id = arrivalEvent.id
+        departureEvent = Event(DEPARTURE, arrivalEvent.id, departureTime, arrivalEvent.packetLength)
         return departureEvent
 
 def question1():
