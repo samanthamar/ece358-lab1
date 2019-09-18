@@ -1,7 +1,10 @@
-import math
-import random
-import numpy
+import bisect
 import csv
+import math
+import numpy
+import random
+import time
+
 
 # Constant event types
 ARRIVAL = 'ARRIVAL'
@@ -25,9 +28,15 @@ class Event(object):
         self.time = 0
         self.packetLength = 0 
 
+    def __lt__(self, event2):
+        return self.time < event2.time
+
+    def __str__(self):
+        return f"type: {self.type}, time: {self.time}, packetLength:{self.packetLength}"
+
 # WIP 
 class Simulation(object): 
-    def __init__(self, lambd, L, T, alpha, C, queueSize ):
+    def __init__(self, lambd, L, T, alpha, C, queueSize):
         # User provided params 
         self.lambd = lambd # the interarrival rate 
         self.duration = T # sim duration 
@@ -39,6 +48,7 @@ class Simulation(object):
         self.numObservations = 0
         self.numOfPackets = 0 # the total num of packets
         self.eventsList = [] # This will be sorted
+        self.currentQueueLength = 0
         # Stats 
         self.Na = 0 # Number of arrivals
         self.No = 0 # Number of observations
@@ -46,13 +56,30 @@ class Simulation(object):
         self.pIdle = 0 # Idle packets, the wait time
         self.pLoss = 0 # Packets lost 
         self.avgNumPacketsInBuffer = 0 # Avg packets in buffer
+
     
-    def processEvents(self):  
-        for event in self.eventsList: 
+    def processEvents(self):
+        previousDepartureEvent = None
+
+        i = 0
+        while i < len(self.eventsList):
+            event = self.eventsList[i]
+
             if event.type == ARRIVAL:
+                print(event)
                 self.Na += 1
+                # Generate the departure if queue not full, drop packet if queue full
+                if self.currentQueueLength < self.queueSize:
+                    self.currentQueueLength += 1
+                    departureEvent = self.generateDeparture(event, previousDepartureEvent)
+                    previousDepartureEvent = departureEvent
+                    bisect.insort(self.eventsList, departureEvent)
+                else:
+                    self.pLoss += 1
             elif event.type == DEPARTURE:
+                print(event)
                 self.Nd += 1
+                self.currentQueueLength -= 1
             else: 
                 self.No += 1
                 self.avgNumPacketsInBuffer += self.Na - self.Nd 
@@ -60,6 +87,8 @@ class Simulation(object):
                 # the queue is not in use and is therefore idle 
                 if (self.Na - self.Nd == 0): 
                     self.pIdle += 1 
+            i += 1
+
         # Get the avg number of packets in buffer 
         # E[N] =  sum of (Na - Nd) / No
         self.avgNumPacketsInBuffer = self.avgNumPacketsInBuffer / self.No
@@ -70,7 +99,8 @@ class Simulation(object):
             'No': self.No,
             'Nd': self.Nd,
             'E[N]': self.avgNumPacketsInBuffer,
-            'pIdle': self.pIdle
+            'pIdle': self.pIdle,
+            'pLoss': int(self.pLoss / self.numPackets),
         }
         print (simSummary)
         return simSummary
@@ -137,29 +167,15 @@ class Simulation(object):
         self.generateArrivals()
         self.generateObservations()
         self.sortEventsList()
-        self.generateDepartures()
-        self.sortEventsList()
         # self.generateEventsCsv()
         simSummary = self.processEvents()
         return simSummary
 
-    def generateDepartures(self):
-        previousEvent = None
-        departureEvents = []
-        for event in self.eventsList:
-            if event.type == ARRIVAL:
-                 # Create new departure event add to queue
-                departureEvent = self.populateDeparture(event, previousEvent)
-                previousEvent = departureEvent
-                departureEvents.append(departureEvent)
-        # Add departures events to the events list
-        self.eventsList.extend(departureEvents)
-
-    def populateDeparture(self, arrivalEvent, previousDepartureEvent): 
+    def generateDeparture(self, arrivalEvent, previousDepartureEvent=None):
         # Based on the sorted list of arrivals + observations, 
         # determine when a packet departs 
         serviceTime = (arrivalEvent.packetLength/(self.linkRate))
-        # If first packet being serviced, or queue is empty, departure time is arrival + service type
+        # If first packet being serviced, or queue is empty, departure time is arrival + service time
         if previousDepartureEvent is None or arrivalEvent.time > previousDepartureEvent.time:
             departureTime = arrivalEvent.time + serviceTime
         else:
@@ -192,7 +208,7 @@ def question1():
 # M/M/1 Queue sim constants 
 L = 2000 # packet size  
 C = 1000000 # link rate 
-k = 1 # queue size
+k = float("inf") # queue size
 T = 1000 # simulation time 
 def question3(): 
 
