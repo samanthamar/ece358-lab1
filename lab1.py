@@ -14,6 +14,7 @@ DEPARTURE = 'DEPARTURE'
 # CSV files 
 eventsFile = 'events.csv'
 q3File = 'q3.csv'
+q6File = 'q6.csv'
 
 # Generate exponential random vairables 
 def generateRv(rate): 
@@ -263,7 +264,7 @@ def question6():
         writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
         # Write rows
         writer.writerow(['k', 'rho', 'Na', 'Nd', 'No', 'E[N]', 'pIdle', 'pLoss'])
-        for k, summaries in q3Summary.items():
+        for k, summaries in q6Summary.items():
             for rho, summary in summaries.items():
                 # Observation events do not have a packet length
                 Na = summary['Na']
@@ -274,7 +275,7 @@ def question6():
                 pLoss = summary['pLoss']
                 row = [k, rho, Na, Nd, No, packets, pIdle, pLoss]
                 writer.writerow(row)
-        print ("Sucessfully wrote q3 results to file")
+        print ("Sucessfully wrote q6 results to file")
 
 # Answer the questions    
 # question1()
