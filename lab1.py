@@ -14,6 +14,7 @@ DEPARTURE = 'DEPARTURE'
 # CSV files 
 eventsFile = 'events.csv'
 q3File = 'q3.csv'
+q6File = 'q6_k50.csv'
 
 # Generate exponential random vairables 
 def generateRv(rate): 
@@ -67,25 +68,26 @@ class Simulation(object):
 
             if event.type == ARRIVAL:
                 print(event)
-                self.Na += 1
                 # Generate the departure if queue not full, drop packet if queue full
                 if self.currentQueueLength < self.queueSize:
+                    self.Na += 1
                     self.currentQueueLength += 1
                     departureEvent = self.generateDeparture(event, previousDepartureEvent)
                     previousDepartureEvent = departureEvent
                     bisect.insort(self.eventsList, departureEvent)
                 else:
                     self.pLoss += 1
+                    print("@@@@@@@@@@@@@@ DROPPED @@@@@@@@@@@@@@")
             elif event.type == DEPARTURE:
                 print(event)
                 self.Nd += 1
                 self.currentQueueLength -= 1
             else: 
                 self.No += 1
-                self.avgNumPacketsInBuffer += self.Na - self.Nd 
+                self.avgNumPacketsInBuffer += self.currentQueueLength
                 # If the difference between Na and Nd is 0, this means that
                 # the queue is not in use and is therefore idle 
-                if (self.Na - self.Nd == 0): 
+                if (self.currentQueueLength == 0):
                     self.pIdle += 1 
             i += 1
 
@@ -100,7 +102,7 @@ class Simulation(object):
             'Nd': self.Nd,
             'E[N]': self.avgNumPacketsInBuffer,
             'pIdle': self.pIdle,
-            'pLoss': int(self.pLoss / self.numPackets),
+            'pLoss': float(self.pLoss) / self.numPackets,
         }
         print (simSummary)
         return simSummary
@@ -242,7 +244,41 @@ def question4():
     mm1 = Simulation(lambd, L, T, alpha, C, k)
     summary = mm1.run() 
 
+def question6():
+    q6Summary = {}
+    queueLengths = [50]
+    rhoList = [0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.1, 1.2, 1.3, 1.4, 1.5]
+
+    for k in queueLengths:
+        q6Summary[k] = {}
+        for p in rhoList:
+            lambd = (p*C)/L # packet arrival rate
+            alpha = 5*lambd # observer rate
+            mm1k = Simulation(lambd, L, T, alpha, C, k)
+            print (f"Starting sim for rho={p}, queueLength={k}")
+            summary = mm1k.run()
+            q6Summary[k][p] = summary
+
+    with open(q6File, mode='w') as f:
+        # Create the csv writer
+        writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+        # Write rows
+        writer.writerow(['k', 'rho', 'Na', 'Nd', 'No', 'E[N]', 'pIdle', 'pLoss'])
+        for k, summaries in q6Summary.items():
+            for rho, summary in summaries.items():
+                # Observation events do not have a packet length
+                Na = summary['Na']
+                Nd = summary['Nd']
+                No = summary['No']
+                packets = summary['E[N]']
+                pIdle = summary['pIdle']
+                pLoss = summary['pLoss']
+                row = [k, rho, Na, Nd, No, packets, pIdle, pLoss]
+                writer.writerow(row)
+        print ("Sucessfully wrote q6 results to file")
+
 # Answer the questions    
-question1()
-question3()
-question4()
+# question1()
+# question3()
+# question4()
+question6()
