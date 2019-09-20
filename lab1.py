@@ -33,7 +33,7 @@ class Event(object):
         return self.time < event2.time
 
     def __str__(self):
-        return "type: {}, time: {}, packetLength:{}".format(self.type, self.time, self.packetLength)
+        return "type: {0}, time: {1}, packetLength:{2}".format(self.type, self.time, self.packetLength)
 
 # WIP 
 class Simulation(object): 
