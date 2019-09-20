@@ -33,7 +33,7 @@ class Event(object):
         return self.time < event2.time
 
     def __str__(self):
-        return f"type: {self.type}, time: {self.time}, packetLength:{self.packetLength}"
+        return "type: {}, time: {}, packetLength:{}".format(self.type, self.time, self.packetLength)
 
 # WIP 
 class Simulation(object): 
@@ -255,7 +255,7 @@ def question6():
             lambd = (p*C)/L # packet arrival rate
             alpha = 5*lambd # observer rate
             mm1k = Simulation(lambd, L, T, alpha, C, k)
-            print (f"Starting sim for rho={p}, queueLength={k}")
+            print ('Starting sim for rho=%s, queueLength=%s' % (p, k))
             summary = mm1k.run()
             q6Summary[k][p] = summary
 
