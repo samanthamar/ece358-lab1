@@ -14,7 +14,7 @@ DEPARTURE = 'DEPARTURE'
 # CSV files 
 eventsFile = 'events.csv'
 q3File = 'q3.csv'
-q6File = 'q6_k50.csv'
+q6File = 'q6.csv'
 
 # Generate exponential random vairables 
 def generateRv(rate): 
@@ -246,7 +246,7 @@ def question4():
 
 def question6():
     q6Summary = {}
-    queueLengths = [50]
+    queueLengths = [10, 25, 50]
     rhoList = [0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.1, 1.2, 1.3, 1.4, 1.5]
 
     for k in queueLengths:
@@ -278,7 +278,7 @@ def question6():
         print ("Sucessfully wrote q6 results to file")
 
 # Answer the questions    
-# question1()
-# question3()
-# question4()
+question1()
+question3()
+question4()
 question6()
